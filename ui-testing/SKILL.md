@@ -150,6 +150,7 @@ You **MUST** run the full suite three times in a row without `--update-snapshots
 | One shared server for parallel tests that mutate state | Mutating specs run `serial` in one project; all others mock the API |
 | Baselines generated on macOS, compared on Linux CI | Baselines are per-OS (`-darwin.png`); generate them in the CI image too |
 | Coverage of the whole page including vendor bundles | Filter to the app's own scripts with `APP_SCRIPT_MATCH` |
+| `page.reload()` inside a test | Chrome drops coverage for the page being left, so code that ran before the reload is reported as never run; use the fixtures' `reload(page)`, which saves coverage first |
 | Theme stored under a generic `localStorage` key | Old builds' preferences leak in; test with a stale key pre-seeded |
 
 ## Ship gate
@@ -175,7 +176,7 @@ You **MUST** run the full suite three times in a row without `--update-snapshots
 |---|---|
 | `scripts/scaffold.sh` | create `e2e/` in a project and install dependencies |
 | `assets/playwright.config.ts` | desktop + mobile projects, webServer, Chrome channel, screenshot tolerance |
-| `assets/fixtures.ts` | strict console, JS coverage capture, `mockApi`, `mockJob`, `open`, `expectNoHorizontalOverflow` |
+| `assets/fixtures.ts` | strict console, JS coverage capture, `mockApi`, `mockJob`, `open`, `reload`, `expectNoHorizontalOverflow` |
 | `scripts/coverage-report.mjs` | merge coverage, print %, list untouched functions and code |
 | `assets/state-matrix.md` | regions × states and controls × states template |
 | `references/layer-patterns.md` | copy-ready test patterns for every layer |

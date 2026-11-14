@@ -21,6 +21,12 @@ Real failures from a first full run of this suite on a dashboard, sorted by whic
 | Wheel scroll after a click didn't change the highlight | Wheel fired during the click's smooth scroll; the browser finished the programmatic scroll | Wait for the smooth scroll to settle, as a person would |
 | axe contrast failure only sometimes | Scan ran while panels were still fading in (opacity < 1 lowers real contrast) | `open()` waits for the first-paint animation class to clear |
 
+## Tool bugs (fix the harness)
+
+| Symptom | Real cause | Fix |
+|---|---|---|
+| Coverage report says a branch never ran, but a passing test asserts its output | The test reloaded the page; Chrome discards a page's coverage on navigation, so only the last load was recorded | `reload(page)` helper stops and saves coverage, restarts it, then reloads |
+
 ## Intentional design (assert the intent)
 
 | Symptom | Intent | Fix |

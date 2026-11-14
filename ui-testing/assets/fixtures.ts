@@ -32,6 +32,17 @@ const APP_SCRIPT = new RegExp(process.env.APP_SCRIPT_MATCH ?? "/static/");
 
 export const snapshot = (name = DEFAULT_SNAPSHOT) => JSON.parse(fs.readFileSync(path.join(FIXTURES, name), "utf8"));
 
+// Chrome drops a page's coverage when it navigates away, so coverage gathered
+// before a reload would be lost (and reported as "never run"). reload() saves it first.
+const earlier = new WeakMap<Page, any[]>();
+
+/** Reload without losing the coverage collected so far. Use instead of page.reload(). */
+export async function reload(page: Page) {
+  earlier.get(page)?.push(...(await page.coverage.stopJSCoverage()));
+  await page.coverage.startJSCoverage({ resetOnNavigation: false });
+  await page.reload();
+}
+
 export function allowConsoleErrors(info: TestInfo) {
   info.annotations.push({ type: "allow-console-errors" });
 }
@@ -50,8 +61,9 @@ export const test = base.extend<{
     page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
     page.on("console", (m) => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
     await page.coverage.startJSCoverage({ resetOnNavigation: false });
+    earlier.set(page, []);
     await use(page);
-    const cov = (await page.coverage.stopJSCoverage()).filter((e) => APP_SCRIPT.test(e.url) && !e.url.includes("node_modules"));
+    const cov = [...(earlier.get(page) ?? []), ...(await page.coverage.stopJSCoverage())].filter((e) => APP_SCRIPT.test(e.url) && !e.url.includes("node_modules"));
     if (cov.length) {
       fs.mkdirSync(COVERAGE_DIR, { recursive: true });
       const id = `${testInfo.project.name}-${testInfo.testId}`.replace(/[^a-z0-9-]/gi, "_");
